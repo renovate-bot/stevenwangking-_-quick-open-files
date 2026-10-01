@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2026-10-01
+
+### Changed
+
+- New extension icon: a white folder with an amber lightning bolt on a purple rounded tile.
+- Directory entries are now listed alphabetically by default, so files are visible right away even in folders that contain mostly folders (e.g. the home directory). Set `quickOpenFiles.listDirsFirst` to `true` to restore folder-first ordering.
+
+### Fixed
+
+- The filter typed into the picker is now cleared when navigating into a folder; previously the stale filter silently hid most entries of the new listing.
+- Wildcard exclusion patterns now match dotfile names (e.g. `**/*.pyc` also hides `.hidden.pyc`), matching the semantics of VS Code's own glob used by `files.exclude`.
+- `~\` (Windows-style separator) in bookmarks now expands to the home directory, like `~/` always has.
+- Exclusion patterns with surrounding whitespace now work, matching VS Code's glob preprocessing.
+- `files.exclude` fallback now also applies when the editor reports `quickOpenFiles.excludePatterns` as an empty array instead of `undefined` (observed in some VS Code forks), while an explicitly configured empty array still disables the fallback.
+- Design proposals under `icon-proposals/` are no longer packaged into the VSIX.
+
 ## [0.1.1] - 2026-08-31
 
 ### Changed

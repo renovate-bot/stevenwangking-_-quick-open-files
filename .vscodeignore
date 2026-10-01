@@ -12,3 +12,4 @@ docs/**
 vitest.config.ts
 .vscode-test.mjs
 scripts/**
+icon-proposals/**

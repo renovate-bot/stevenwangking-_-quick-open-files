@@ -13,17 +13,12 @@ export interface FileEntry {
   exists: boolean;
 }
 
-export interface ExcludePatterns {
-  folderExcludePatterns: string[];
-  fileExcludePatterns: string[];
-}
-
-/** Expand a leading `~` to the user's home directory. */
+/** Expand a leading `~` to the user's home directory. Accepts both `~/` and `~\`. */
 export function expandHome(p: string): string {
   if (p === '~') {
     return homedir();
   }
-  if (p.startsWith('~/')) {
+  if (p.startsWith('~/') || p.startsWith('~\\')) {
     return join(homedir(), p.slice(2));
   }
   return p;
@@ -52,23 +47,21 @@ type NameMatcher = (name: string) => boolean;
  * `files.exclude`-style patterns ending in "/**" also match the folder entry
  * itself, so hidden folders stay out of listings. A leading double-star
  * prefix needs no special case: minimatch matches it against a bare name.
+ * `dot: true` mirrors VS Code's glob semantics (glob.ts compiles `*` to
+ * `[^/\\]*?`), where wildcards match dotfile names; minimatch's default
+ * would leave files like `.hidden.pyc` visible while the Explorer hides them.
  */
 function compileNamePattern(pattern: string): NameMatcher {
-  const direct = new Minimatch(pattern);
-  const stripped = pattern.replace(/\/\*\*$/, '');
-  const folder = stripped === pattern ? undefined : new Minimatch(stripped);
+  // VS Code's glob trims surrounding whitespace off configured patterns.
+  const trimmed = pattern.trim();
+  const direct = new Minimatch(trimmed, { dot: true });
+  const stripped = trimmed.replace(/\/\*\*$/, '');
+  const folder = stripped === trimmed ? undefined : new Minimatch(stripped, { dot: true });
   return (name) => direct.match(name) || (folder?.match(name) ?? false);
 }
 
-function isExcluded(name: string, isDir: boolean, matchers: { folders: NameMatcher[]; files: NameMatcher[] }): boolean {
-  const list = isDir ? matchers.folders : matchers.files;
-  return list.some((matches) => matches(name));
-}
-
-async function isDirectory(path: string, isSymlink: boolean): Promise<boolean> {
-  if (!isSymlink) {
-    return true; // caller knows it came from a Dirent with isDirectory()
-  }
+/** Resolve whether a symlink points to a folder; broken links count as files. */
+async function symlinkIsDirectory(path: string): Promise<boolean> {
   try {
     return (await stat(path)).isDirectory();
   } catch {
@@ -78,28 +71,26 @@ async function isDirectory(path: string, isSymlink: boolean): Promise<boolean> {
 
 /**
  * List the contents of a directory, with a leading `..` entry when a parent exists.
- * Folders are listed before files when `listDirsFirst`, and each group is sorted
- * alphabetically. Symlinks are followed to decide whether they open as folders.
+ * `excludePatterns` are globs matched against entry names, applying to files and
+ * folders alike, like the original plugin's filter. Folders are listed before
+ * files when `listDirsFirst`, and each group is sorted alphabetically. Symlinks
+ * are followed to decide whether they open as folders.
  */
 export async function dirEntries(
   dir: string,
-  exclude: ExcludePatterns,
+  excludePatterns: readonly string[],
   listDirsFirst: boolean
 ): Promise<FileEntry[]> {
   const dirents = await readdir(dir, { withFileTypes: true });
-  // Compile each glob once per listing instead of once per entry.
-  const matchers = {
-    folders: exclude.folderExcludePatterns.map(compileNamePattern),
-    files: exclude.fileExcludePatterns.map(compileNamePattern),
-  };
+  const matchers = excludePatterns.map(compileNamePattern);
 
   const entries: FileEntry[] = [];
   for (const dirent of dirents) {
-    const isSymlink = dirent.isSymbolicLink();
-    const isDir = dirent.isDirectory() || (isSymlink && (await isDirectory(join(dir, dirent.name), true)));
-    if (isExcluded(dirent.name, isDir, matchers)) {
-      continue;
+    if (matchers.some((matches) => matches(dirent.name))) {
+      continue; // check excludes before resolving symlinks, which needs a stat
     }
+    const isSymlink = dirent.isSymbolicLink();
+    const isDir = dirent.isDirectory() || (isSymlink && (await symlinkIsDirectory(join(dir, dirent.name))));
     entries.push({
       label: isDir ? `${dirent.name}/` : dirent.name,
       path: join(dir, dirent.name),

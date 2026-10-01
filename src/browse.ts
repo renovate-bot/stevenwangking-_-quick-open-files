@@ -1,21 +1,11 @@
 import * as vscode from 'vscode';
 import { dirname } from 'node:path';
 import { QuickInputButtons, QuickPickItemKind, Uri } from 'vscode';
-import { bookmarkEntries, currentDirOf, dirEntries, ExcludePatterns, FileEntry } from './filesList';
+import { bookmarkEntries, currentDirOf, dirEntries, FileEntry } from './filesList';
 import { getSettings, Settings } from './settings';
 
 interface BrowseItem extends vscode.QuickPickItem {
   entry?: FileEntry;
-}
-
-const NO_EXCLUDE: ExcludePatterns = { folderExcludePatterns: [], fileExcludePatterns: [] };
-
-function excludeFrom(patterns: string[] | undefined): ExcludePatterns {
-  if (!patterns) {
-    return NO_EXCLUDE;
-  }
-  // A flat pattern list applies to both files and folders, like the original plugin's filter.
-  return { folderExcludePatterns: patterns, fileExcludePatterns: patterns };
 }
 
 export class BrowseSession {
@@ -53,9 +43,7 @@ export class BrowseSession {
     const bookmarks = await bookmarksPromise;
 
     const items: BrowseItem[] = [{ label: 'Bookmarks', kind: QuickPickItemKind.Separator }];
-    for (const entry of bookmarks) {
-      items.push(toItem(entry));
-    }
+    items.push(...bookmarks.map(toItem));
     if (dir) {
       items.push({ label: dir, kind: QuickPickItemKind.Separator });
       items.push(...(await entriesPromise).map(toItem));
@@ -78,6 +66,9 @@ export class BrowseSession {
     this.currentDir = dir;
     this.qp.buttons = [QuickInputButtons.Back];
     this.qp.title = dir;
+    // Clear the filter typed for the previous listing; QuickPick keeps it
+    // across item changes, which would silently hide most of the new entries.
+    this.qp.value = '';
     this.qp.busy = true;
     const entries = await this.listDir(dir, gen);
     if (gen !== this.generation) {
@@ -90,7 +81,7 @@ export class BrowseSession {
   /** Read a directory; failures of a view already replaced are not reported. */
   private async listDir(dir: string, gen: number): Promise<FileEntry[]> {
     try {
-      return await dirEntries(dir, excludeFrom(this.settings.excludePatterns), this.settings.listDirsFirst);
+      return await dirEntries(dir, this.settings.excludePatterns, this.settings.listDirsFirst);
     } catch (err) {
       if (gen === this.generation) {
         vscode.window.showErrorMessage(`Quick Open Files: cannot read ${dir} (${errorMessage(err)})`);
