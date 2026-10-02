@@ -45,6 +45,32 @@ suite('Quick Open Files extension', () => {
     }
   });
 
+  test('listBookmarks toggles the bookmark section in the root view', async function () {
+    this.timeout(10000);
+    const hasBookmarkSection = (session: BrowseSession) =>
+      (session as unknown as SessionInternals).qp.items.some(
+        (item) => item.label === 'Bookmarks' && item.kind === vscode.QuickPickItemKind.Separator,
+      );
+
+    const hidden = new BrowseSession({ ...getSettings(), listBookmarks: false });
+    try {
+      hidden.start();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      assert.ok(!hasBookmarkSection(hidden), 'no bookmark section when listBookmarks is false');
+    } finally {
+      (hidden as unknown as SessionInternals).qp.hide();
+    }
+
+    const shown = new BrowseSession({ ...getSettings(), listBookmarks: true });
+    try {
+      shown.start();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      assert.ok(hasBookmarkSection(shown), 'bookmark section appears when listBookmarks is true');
+    } finally {
+      (shown as unknown as SessionInternals).qp.hide();
+    }
+  });
+
   test('empty excludePatterns only counts when explicitly configured', async () => {
     const cfg = vscode.workspace.getConfiguration('quickOpenFiles');
     try {

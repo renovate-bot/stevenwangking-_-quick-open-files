@@ -36,14 +36,20 @@ export class BrowseSession {
     this.qp.placeholder = 'Filter files and folders';
     this.qp.busy = true;
     // Load bookmarks and the current directory together; they are independent.
-    const bookmarksPromise = bookmarkEntries(this.settings.bookmarks);
+    // Bookmarks are skipped entirely when hidden: no section, no fs checks.
+    const bookmarksPromise = this.settings.listBookmarks
+      ? bookmarkEntries(this.settings.bookmarks)
+      : Promise.resolve([]);
     // currentDirOf skips untitled/remote documents, whose fsPath has no real folder.
     const dir = this.settings.listCurrentDir ? currentDirOf(activeDoc) : undefined;
     const entriesPromise: Promise<FileEntry[]> = dir ? this.listDir(dir, gen) : Promise.resolve([]);
     const bookmarks = await bookmarksPromise;
 
-    const items: BrowseItem[] = [{ label: 'Bookmarks', kind: QuickPickItemKind.Separator }];
-    items.push(...bookmarks.map(toItem));
+    const items: BrowseItem[] = [];
+    if (this.settings.listBookmarks) {
+      items.push({ label: 'Bookmarks', kind: QuickPickItemKind.Separator });
+      items.push(...bookmarks.map(toItem));
+    }
     if (dir) {
       items.push({ label: dir, kind: QuickPickItemKind.Separator });
       items.push(...(await entriesPromise).map(toItem));

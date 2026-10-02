@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-10-02
+
+### Changed
+
+- Extension icon background now fills the entire tile with purple; the white corners around the rounded shape are gone.
+
+## [0.2.0] - 2026-10-02
+
+### Added
+
+- New setting `quickOpenFiles.listBookmarks` (default `false`) to toggle the bookmark list in the picker. Bookmarks are now hidden by default; set it to `true` to restore the previous behavior.
+
 ## [0.1.2] - 2026-10-01
 
 ### Changed

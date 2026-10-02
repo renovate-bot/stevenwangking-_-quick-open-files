@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 export interface Settings {
   bookmarks: string[];
+  listBookmarks: boolean;
   persistentBrowsing: boolean;
   listCurrentDir: boolean;
   listDirsFirst: boolean;
@@ -13,6 +14,7 @@ export function getSettings(): Settings {
   const cfg = vscode.workspace.getConfiguration('quickOpenFiles');
   return {
     bookmarks: cfg.get<string[]>('bookmarks', ['~']),
+    listBookmarks: cfg.get('listBookmarks', false),
     persistentBrowsing: cfg.get('persistentBrowsing', false),
     listCurrentDir: cfg.get('listCurrentDir', true),
     listDirsFirst: cfg.get('listDirsFirst', false),

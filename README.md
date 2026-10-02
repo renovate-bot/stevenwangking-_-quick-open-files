@@ -8,7 +8,7 @@ Inspired by the classic [sublime-open](https://github.com/danielfrg/sublime-open
 
 ## Features
 
-- **Bookmarks**: jump straight to frequently used files and folders, across all workspaces.
+- **Bookmarks (opt-in)**: jump straight to frequently used files and folders, across all workspaces. Set `quickOpenFiles.listBookmarks` to `true` to list them.
 - **File system browsing**: drill into any directory with `Enter`, go up with `../` or the `←` back button.
 - **Persistent browsing (opt-in)**: set `quickOpenFiles.persistentBrowsing` to keep the picker open after opening a file, so you can keep opening more.
 - **Current directory listing**: the active editor's folder is listed right below your bookmarks.
@@ -26,6 +26,7 @@ Default keyboard shortcut: `Cmd+Alt+O` (macOS) / `Ctrl+Alt+O` (Windows, Linux). 
 | Setting | Default | Description |
 |---|---|---|
 | `quickOpenFiles.bookmarks` | `["~"]` | Files or folders shown at the top of the picker. `~` expands to your home directory. |
+| `quickOpenFiles.listBookmarks` | `false` | List your bookmarks at the top of the picker. |
 | `quickOpenFiles.persistentBrowsing` | `false` | Keep the picker open after opening a file. |
 | `quickOpenFiles.listCurrentDir` | `true` | List the active editor's folder below the bookmarks. |
 | `quickOpenFiles.listDirsFirst` | `false` | List folders before files instead of mixing everything alphabetically. |
@@ -36,6 +37,7 @@ Example:
 ```json
 {
   "quickOpenFiles.bookmarks": ["~", "~/.ssh/config", "~/projects"],
+  "quickOpenFiles.listBookmarks": true,
   "quickOpenFiles.excludePatterns": ["**/node_modules/**", ".DS_Store"]
 }
 ```

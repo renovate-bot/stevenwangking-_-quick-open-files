@@ -2,7 +2,7 @@
   "name": "quick-open-files",
   "displayName": "Quick Open Files",
   "description": "Open files quicker and easier: browse your bookmarks or any directory from a Quick Pick, even outside the workspace.",
-  "version": "0.1.2",
+  "version": "0.2.1",
   "publisher": "stevenwangking",
   "license": "SEE LICENSE IN LICENSE",
   "icon": "media/icon.png",
@@ -49,6 +49,12 @@
           ],
           "scope": "application",
           "markdownDescription": "Files or folders shown at the top of the picker. `~` expands to your home directory."
+        },
+        "quickOpenFiles.listBookmarks": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "List your bookmarks at the top of the picker."
         },
         "quickOpenFiles.persistentBrowsing": {
           "type": "boolean",
